@@ -73,6 +73,11 @@ game.state.add('play', {
 
 		this.currentMonster = this.monsters.getRandom();
 		this.currentMonster.position.set(this.game.world.centerX + 100, this.game.world.centerY);
+
+		this.player = {
+			clickDmg: 1,
+			gold: 0
+		};
 	},
 
 	render: function() {

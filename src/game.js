@@ -58,17 +58,26 @@ game.state.add('play', {
 		this.monsters = this.game.add.group();
 
 		var monster;
+		// note: create the sprite for each monster. Put it off-screen. Tie it to our Monster data array. make it clickable. set health to max.
 		monsterData.forEach(function(data) {
-			// create a sprite for them off screen
+			// create a sprite for them off screen. note: create(x axis, y axis, reference image). Only works for Sprites.
 			monster = state.monsters.create(1000, state.game.world.centerY, data.image);
 			// center anchor
 			monster.anchor.setTo(0.5);
-			// reference to the database
+			// reference to the database. 
 			monster.details = data;
 
 			// enable input so we can click it!
 			monster.inputEnabled = true;
 			monster.events.onInputDown.add(state.onClickMonster, state);
+
+			// add health to monsters. note: sprite.health = sprite 
+			monster.health = monster.maxHealth = data.maxHealth;
+
+			// hook into health and lifecycle events
+			monster.events.onKilled.add(state.onKilledMonster, state);
+			monster.events.onRevived.add(state.onRevivedMonster, state);
+
 		});
 
 		this.currentMonster = this.monsters.getRandom();
@@ -78,22 +87,58 @@ game.state.add('play', {
 			clickDmg: 1,
 			gold: 0
 		};
+
+		this.monsterInfoUI = this.game.add.group();
+		this.monsterInfoUI.position.setTo(this.currentMonster.x - 220, this.currentMonster.y + 120);
+		this.monsterNameText = this.monsterInfoUI.addChild(this.game.add.text(0,0,this.currentMonster.details.name, {
+			font:'48px Arial Black',
+			fill: '#fff',
+			strokeThickness: 4
+		}));
+		this.monsterHealthText = this.monsterInfoUI.addChild(this.game.add.text(0, 80, this.currentMonster.health + ' HP', {
+			font: '32px Arial Black',
+			fill: '#ff0000',
+			strokeThickness: 4
+		}));
 	},
 
 	render: function() {
-		game.debug.text(this.currentMonster.details.name,
-			this.currentMonster.x - this.currentMonster.width/2,
-			this.currentMonster.y + this.currentMonster.height/2 + 50);
+		// game.debug.text(this.currentMonster.details.name,
+		// 	this.currentMonster.x - this.currentMonster.width/2,
+		// 	this.currentMonster.y + this.currentMonster.height/2 + 50);
+		
 	},
 
+	onClickMonster: function(monster, pointer) {
+		// // reset the currentMonster before we move him
+		// this.currentMonster.position.set(1000, this.game.world.centerY);
+		// // now pick the next in the list, and bring him up
+		// this.currentMonster = this.monsters.getRandom();
+		// this.currentMonster.position.set(this.game.world.centerX + 100, this.game.world.centerY);
 
-	onClickMonster: function() {
-		// reset the currentMonster before we move him
-		this.currentMonster.position.set(1000, this.game.world.centerY);
-		// now pick the next in the list, and bring him up
+		// apply click damage to monster
+		this.currentMonster.damage(this.player.clickDmg);
+		// update the health text
+		this.monsterHealthText.text = this.currentMonster.alive ? this.currentMonster.health + ' HP' : 'DEAD';
+	},
+
+	onKilledMonster: function(monster) {
+		// move the monster off screen again
+		monster.position.set(1000, this.game.world.centerY);
+
+		// pick a new monster
 		this.currentMonster = this.monsters.getRandom();
-		this.currentMonster.position.set(this.game.world.centerX + 100, this.game.world.centerY);	
+		// make sure it has full health
+		this.currentMonster.revive(this.currentMonster.maxHealth);
+	},
+
+	onRevivedMonster: function(monster) {
+		monster.position.set(this.game.world.centerX + 100, this.game.world.centerY);
+		// update the text display
+		this.monsterNameText.text = monster.details.name;
+		this.monsterHealthText.text = monster.details.maxHealth + ' HP';
 	}
+
 });
 
 game.state.start('play');

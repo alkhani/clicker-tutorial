@@ -2,7 +2,6 @@ var game = new Phaser.Game(800, 600, Phaser.AUTO, '');
 
 game.state.add('play', {
 	preload: function() {
-		this.game.load.image('skeleton', 'assets/allacrost_enemy_sprites/skeleton.png');		
 		this.game.load.image('forest-back', 'assets/parallax_forest_pack/layers/parallax-forest-back-trees.png');
 		this.game.load.image('forest-lights', 'assets/parallax_forest_pack/layers/parallax-forest-lights.png');
 		this.game.load.image('forest-middle', 'assets/parallax_forest_pack/layers/parallax-forest-middle-trees.png');
@@ -63,24 +62,22 @@ game.state.add('play', {
 
 		this.monsters = this.game.add.group();
 
-		// note: create the sprite for each monster. Put it off-screen. Tie it to our Monster data array. 
+		// create the sprite for each monster. Put it off-screen. Tie it to our Monster data array. 
 		// make it clickable. set health to max. give it killed & revived events.
 		var monster;
 		monsterData.forEach(function(data) {
-			// create a sprite for them off screen. note: create(x axis, y axis, reference image). Only works for Sprites.
+			// create a sprite for them off screen. 
+			// create(x axis, y axis, reference image). Only works for Sprites.
 			monster = state.monsters.create(1000, state.game.world.centerY, data.image);
 			// center anchor
 			monster.anchor.setTo(0.5);
 			// reference to the database. 
 			monster.details = data;
-
 			// enable input so we can click it!
 			monster.inputEnabled = true;
 			monster.events.onInputDown.add(state.onClickMonster, state);
-
 			// add health to monsters. note: sprite.health = sprite 
 			monster.health = monster.maxHealth = data.maxHealth;
-
 			// hook into health and lifecycle events
 			monster.events.onKilled.add(state.onKilledMonster, state);
 			monster.events.onRevived.add(state.onRevivedMonster, state);
@@ -115,6 +112,8 @@ game.state.add('play', {
 		//
 		// Damage Text
 		//
+		// create 50 placeholder numbers
+		// give them each a tween property so they fly away whenever we draw one of them 
 		this.dmgTextPool = this.add.group();
 		var dmgText;
 		for (var d=0; d<50; d++) {
@@ -126,8 +125,8 @@ game.state.add('play', {
 			});
 			// don't draw it yet
 			dmgText.exists = false;
-			// For the damage text, we want it to fly out from where it was clicked in a random direction 
-			// and also fade out so that by the time that it reaches its destination, it can no longer be seen.
+			// "For the damage text, we want it to fly out from where it was clicked in a random direction 
+			// and also fade out so that by the time that it reaches its destination, it can no longer be seen."
 			dmgText.tween = game.add.tween(dmgText)
 				.to({ // the final destination of the tween animation. (final alpha opacity, final x coord, final y coord, milliseconds to animate (1000 = 1s), Easing equation we want ot use)
 					alpha: 0, 
@@ -149,11 +148,11 @@ game.state.add('play', {
 	},
 
 	onClickMonster: function(monster, pointer) {
-		// apply click damage to monster
+		// apply damage to monster
 		this.currentMonster.damage(this.player.clickDmg);
 		// update the health text
 		this.monsterHealthText.text = this.currentMonster.alive ? this.currentMonster.health + ' HP' : 'DEAD';
-
+		// animate the damage flying out of the monster
 		var dmgText = this.dmgTextPool.getFirstExists(false);
 		if (dmgText) {
 			dmgText.text = this.player.clickDmg;
@@ -164,19 +163,21 @@ game.state.add('play', {
 
 	},
 
+	// take the current monster away and.. revive another one
 	onKilledMonster: function(monster) {
 		// move the monster off screen again
 		monster.position.set(1000, this.game.world.centerY);
-
 		// pick a new monster
 		this.currentMonster = this.monsters.getRandom();
 		// make sure it has full health
 		this.currentMonster.revive(this.currentMonster.maxHealth);
 	},
 
+	// new monster appears
 	onRevivedMonster: function(monster) {
+		// put a monster back in view 
 		monster.position.set(this.game.world.centerX + 100, this.game.world.centerY);
-		// update the text display
+		// update the name and health text
 		this.monsterNameText.text = monster.details.name;
 		this.monsterHealthText.text = monster.details.maxHealth + ' HP';
 	}

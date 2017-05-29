@@ -28,6 +28,9 @@ game.state.add('play', {
 	create: function() {
 		var state = this;
 
+		//
+		// Background
+		//
 		this.background = this.game.add.group();
 		// setup each of our background layers to take the full screen
 		['forest-back', 'forest-lights', 'forest-middle', 'forest-front']
@@ -36,6 +39,9 @@ game.state.add('play', {
 				bg.tileScale.setTo(4,4);
 			});
 
+		//
+		// Monsters
+		//
 		var monsterData = [
 			{name: 'Aerocephal',        image: 'aerocephal',        maxHealth: 10},
 			{name: 'Arcana Drake',      image: 'arcana_drake',      maxHealth: 20},
@@ -57,8 +63,9 @@ game.state.add('play', {
 
 		this.monsters = this.game.add.group();
 
+		// note: create the sprite for each monster. Put it off-screen. Tie it to our Monster data array. 
+		// make it clickable. set health to max. give it killed & revived events.
 		var monster;
-		// note: create the sprite for each monster. Put it off-screen. Tie it to our Monster data array. make it clickable. set health to max.
 		monsterData.forEach(function(data) {
 			// create a sprite for them off screen. note: create(x axis, y axis, reference image). Only works for Sprites.
 			monster = state.monsters.create(1000, state.game.world.centerY, data.image);
@@ -77,17 +84,13 @@ game.state.add('play', {
 			// hook into health and lifecycle events
 			monster.events.onKilled.add(state.onKilledMonster, state);
 			monster.events.onRevived.add(state.onRevivedMonster, state);
-
 		});
 
+		// pick a monster and put it on the screen
 		this.currentMonster = this.monsters.getRandom();
 		this.currentMonster.position.set(this.game.world.centerX + 100, this.game.world.centerY);
 
-		this.player = {
-			clickDmg: 1,
-			gold: 0
-		};
-
+		// put name and health text below the monster 
 		this.monsterInfoUI = this.game.add.group();
 		this.monsterInfoUI.position.setTo(this.currentMonster.x - 220, this.currentMonster.y + 120);
 		this.monsterNameText = this.monsterInfoUI.addChild(this.game.add.text(0,0,this.currentMonster.details.name, {
@@ -100,26 +103,65 @@ game.state.add('play', {
 			fill: '#ff0000',
 			strokeThickness: 4
 		}));
+
+		//
+		// Player
+		//
+		this.player = {
+			clickDmg: 1,
+			gold: 0
+		};
+
+		//
+		// Damage Text
+		//
+		this.dmgTextPool = this.add.group();
+		var dmgText;
+		for (var d=0; d<50; d++) {
+			// add text (x coord, y coord, text, formatting)
+			dmgText = this.add.text(0,0,'1', {
+				font: '64px Arial Black',
+				fill: '#fff',
+				strokeThickness: 4
+			});
+			// don't draw it yet
+			dmgText.exists = false;
+			// For the damage text, we want it to fly out from where it was clicked in a random direction 
+			// and also fade out so that by the time that it reaches its destination, it can no longer be seen.
+			dmgText.tween = game.add.tween(dmgText)
+				.to({ // the final destination of the tween animation. (final alpha opacity, final x coord, final y coord, milliseconds to animate (1000 = 1s), Easing equation we want ot use)
+					alpha: 0, 
+					y: 100,
+					x: this.game.rnd.integerInRange(100, 700)
+				}, 1000, Phaser.Easing.Cubic.Out);
+
+			// kill the text when the tween ends
+			dmgText.tween.onComplete.add(function(text, tween) {
+				text.kill();
+			});
+			this.dmgTextPool.add(dmgText);
+		}
+
 	},
 
 	render: function() {
-		// game.debug.text(this.currentMonster.details.name,
-		// 	this.currentMonster.x - this.currentMonster.width/2,
-		// 	this.currentMonster.y + this.currentMonster.height/2 + 50);
 		
 	},
 
 	onClickMonster: function(monster, pointer) {
-		// // reset the currentMonster before we move him
-		// this.currentMonster.position.set(1000, this.game.world.centerY);
-		// // now pick the next in the list, and bring him up
-		// this.currentMonster = this.monsters.getRandom();
-		// this.currentMonster.position.set(this.game.world.centerX + 100, this.game.world.centerY);
-
 		// apply click damage to monster
 		this.currentMonster.damage(this.player.clickDmg);
 		// update the health text
 		this.monsterHealthText.text = this.currentMonster.alive ? this.currentMonster.health + ' HP' : 'DEAD';
+
+		var dmgText = this.dmgTextPool.getFirstExists(false);
+		if (dmgText) {
+			dmgText.text = this.player.clickDmg;
+			dmgText.reset(pointer.positionDown.x, pointer.positionDown.y);
+			dmgText.alpha = 1;
+			dmgText.tween.start();
+		}
+
 	},
 
 	onKilledMonster: function(monster) {

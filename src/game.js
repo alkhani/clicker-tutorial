@@ -71,12 +71,12 @@ game.state.add('play', {
 			monster = state.monsters.create(1000, state.game.world.centerY, data.image);
 			// center anchor
 			monster.anchor.setTo(0.5);
-			// reference to the database. 
+			// give sprite a reference to the database. 
 			monster.details = data;
 			// enable input so we can click it!
 			monster.inputEnabled = true;
 			monster.events.onInputDown.add(state.onClickMonster, state);
-			// add health to monsters. note: sprite.health = sprite 
+			// give sprite a health param. set health to max health in the database.
 			monster.health = monster.maxHealth = data.maxHealth;
 			// hook into health and lifecycle events
 			monster.events.onKilled.add(state.onKilledMonster, state);
@@ -89,17 +89,19 @@ game.state.add('play', {
 
 		// put name and health text below the monster 
 		this.monsterInfoUI = this.game.add.group();
-		this.monsterInfoUI.position.setTo(this.currentMonster.x - 220, this.currentMonster.y + 120);
+		this.monsterInfoUI.position.setTo(this.currentMonster.x, this.currentMonster.y + 120);
 		this.monsterNameText = this.monsterInfoUI.addChild(this.game.add.text(0,0,this.currentMonster.details.name, {
 			font:'48px Arial Black',
 			fill: '#fff',
 			strokeThickness: 4
 		}));
-		this.monsterHealthText = this.monsterInfoUI.addChild(this.game.add.text(0, 80, this.currentMonster.health + ' HP', {
+		this.monsterNameText.anchor.setTo(0.5);
+		this.monsterHealthText = this.monsterInfoUI.addChild(this.game.add.text(0, 40, this.currentMonster.health + ' HP', {
 			font: '32px Arial Black',
 			fill: '#ff0000',
 			strokeThickness: 4
 		}));
+		this.monsterHealthText.anchor.setTo(0.5);
 
 		//
 		// Player
@@ -123,6 +125,7 @@ game.state.add('play', {
 				fill: '#fff',
 				strokeThickness: 4
 			});
+			dmgText.anchor.setTo(0.5);
 			// don't draw it yet
 			dmgText.exists = false;
 			// "For the damage text, we want it to fly out from where it was clicked in a random direction 

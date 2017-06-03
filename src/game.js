@@ -32,11 +32,11 @@ game.state.add('play', {
 		//
 		this.background = this.game.add.group();
 		// setup each of our background layers to take the full screen
-		['forest-back', 'forest-lights', 'forest-middle', 'forest-front']
-			.forEach(function(image) {
-				var bg = state.game.add.tileSprite(0,0,state.game.world.width, state.game.world.height, image, '', state.background);
-				bg.tileScale.setTo(4,4);
-			});
+		// ['forest-back', 'forest-lights', 'forest-middle', 'forest-front']
+		// 	.forEach(function(image) {
+		// 		var bg = state.game.add.tileSprite(0,0,state.game.world.width, state.game.world.height, image, '', state.background);
+		// 		bg.tileScale.setTo(4,4);
+		// 	});
 
 		//
 		// Monsters
@@ -75,8 +75,8 @@ game.state.add('play', {
 			monster.details = data;
 			// enable input so we can click it!
 			monster.inputEnabled = true;
-			monster.events.onInputDown.add(state.onClickMonster, state);
-			// give sprite a health param. set health to max health in the database.
+			monster.events.onInputDown.add(state.onClickMonster, state); // input (function with sprite & pointer, state)
+			// set the sprite's health param to max health in the database. You heard that right, Sprite alreay has a health param!
 			monster.health = monster.maxHealth = data.maxHealth;
 			// hook into health and lifecycle events
 			monster.events.onKilled.add(state.onKilledMonster, state);
@@ -88,15 +88,16 @@ game.state.add('play', {
 		this.currentMonster.position.set(this.game.world.centerX + 100, this.game.world.centerY);
 
 		// put name and health text below the monster 
+		console.log(this.currentMonster.height);
 		this.monsterInfoUI = this.game.add.group();
-		this.monsterInfoUI.position.setTo(this.currentMonster.x, this.currentMonster.y + 120);
+		this.monsterInfoUI.position.setTo(this.currentMonster.x, this.currentMonster.y + 150);
 		this.monsterNameText = this.monsterInfoUI.addChild(this.game.add.text(0,0,this.currentMonster.details.name, {
 			font:'48px Arial Black',
 			fill: '#fff',
 			strokeThickness: 4
 		}));
 		this.monsterNameText.anchor.setTo(0.5);
-		this.monsterHealthText = this.monsterInfoUI.addChild(this.game.add.text(0, 40, this.currentMonster.health + ' HP', {
+		this.monsterHealthText = this.monsterInfoUI.addChild(this.game.add.text(0, 50, this.currentMonster.health + ' HP', {
 			font: '32px Arial Black',
 			fill: '#ff0000',
 			strokeThickness: 4
@@ -107,7 +108,7 @@ game.state.add('play', {
 		// Player
 		//
 		this.player = {
-			clickDmg: 1,
+			clickDmg: 50,
 			gold: 0
 		};
 
@@ -147,7 +148,16 @@ game.state.add('play', {
 	},
 
 	render: function() {
-		
+		// built-in sprite debug
+		this.game.debug.spriteInfo(this.currentMonster, 100, 100, 'white');
+		this.game.debug.spriteInputInfo(this.currentMonster, 100, 200);
+
+		// custom debug
+		this.game.debug.start(100, 300, 'white');
+		this.game.debug.line('name: ' + this.currentMonster.details.name);
+		this.game.debug.line('height: ' + this.currentMonster.height);
+		this.game.debug.line('text position: ' + this.monsterInfoUI.x + ', ' + this.monsterInfoUI.y)
+		this.game.debug.stop();
 	},
 
 	onClickMonster: function(monster, pointer) {

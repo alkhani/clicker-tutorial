@@ -136,7 +136,7 @@ game.state.add('play', {
 					alpha: 0, 
 					y: 100,
 					x: this.game.rnd.integerInRange(100, 700)
-				}, 1000, Phaser.Easing.Cubic.Out);
+				}, 3000, Phaser.Easing.Cubic.Out);
 
 			// kill the text when the tween ends
 			dmgText.tween.onComplete.add(function(text, tween) {

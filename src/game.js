@@ -23,6 +23,24 @@ game.state.add('play', {
 		this.game.load.image('spider', 'assets/allacrost_enemy_sprites/spider.png');
 		this.game.load.image('stygian_lizard', 'assets/allacrost_enemy_sprites/stygian_lizard.png');
 		this.game.load.image('gold_coin', 'assets/496_RPG_icons/I_GoldCoin.png');
+		this.game.load.image('dagger', 'assets/496_RPG_icons/W_Dagger002.png');
+
+		// build panel for upgrades
+		var bmd = this.game.add.bitmapData(250, 500);
+		bmd.ctx.fillStyle = '#9a783d';
+		bmd.ctx.strokeStyle = '#35371c';
+		bmd.ctx.lineWidth = 12;
+		bmd.ctx.fillRect(0, 0, 250, 500);
+		bmd.ctx.strokeRect(0, 0, 250, 500);
+		this.game.cache.addBitmapData('upgradePanel', bmd);
+
+		var buttonImage = this.game.add.bitmapData(476, 48);
+		buttonImage.ctx.fillStyle = '#e6dec7';
+		buttonImage.ctx.strokeStyle = '#35371c';
+		buttonImage.ctx.lineWidth = 4;
+		buttonImage.ctx.fillRect(0, 0, 225, 48);
+		buttonImage.ctx.strokeRect(0, 0, 225, 48);
+		this.game.cache.addBitmapData('button', buttonImage);
 
 	},
 	create: function() {
@@ -163,16 +181,31 @@ game.state.add('play', {
 			strokeThickness: 4
 		})
 
+		//
+		// Upgrade menu
+		//
+		this.upgradePanel = this.game.add.image(10, 70, this.game.cache.getBitmapData('upgradePanel')); // put our bitmap on the screen
+		var upgradeButtons = this.upgradePanel.addChild(this.game.add.group()); // create a group for the buttons. set them as the children of the bitmap.
+		upgradeButtons.position.setTo(8,8); // set the position of the group of buttons RELATIVE to their parent, the bitmap (ie. 0,0 is the top left corner of the bitmap)
 
+		var button;
+		button = this.game.add.button(0,0,this.game.cache.getBitmapData('button'));
+		button.icon = button.addChild(this.game.add.image(6,6, 'dagger'));
+		button.text = button.addChild(this.game.add.text(42,6,'Attack: ' + this.player.clickDmg, {font: '16px Arial Black'}));
+		button.details = {cost: 5};
+		button.costText = button.addChild(this.game.add.text(42,24,'Cost: ' + button.details.cost, {font: '16px Arial Black'}));
+		button.events.onInputDown.add(this.onUpgradeButtonClick, this);
+
+		upgradeButtons.addChild(button);
 	},
 
 	render: function() {
 		// built-in sprite debug
-		this.game.debug.spriteInfo(this.currentMonster, 100, 100, 'white');
-		this.game.debug.spriteInputInfo(this.currentMonster, 100, 200);
+		this.game.debug.spriteInfo(this.currentMonster, 250, 100, 'white');
+		this.game.debug.spriteInputInfo(this.currentMonster, 250, 200);
 
 		// custom debug
-		this.game.debug.start(100, 300, 'white');
+		this.game.debug.start(250, 300, 'white');
 		this.game.debug.line('name: ' + this.currentMonster.details.name);
 		this.game.debug.line('player.gold: ' + this.player.gold);
 		this.game.debug.stop();
@@ -233,6 +266,17 @@ game.state.add('play', {
 		this.playerGoldText.text = 'Gold: ' + this.player.gold;
 		// kill the coin
 		coin.kill();
+	},
+
+	// click upgrade button
+	onUpgradeButtonClick: function(button, pointer) {
+		// see if i can afford it. wallet > cost
+		if (this.player.gold >= button.details.cost) {
+			this.player.gold -= button.details.cost;
+			this.player.clickDmg += 1
+			this.playerGoldText.text = 'Gold: ' + this.player.gold;
+			button.text.text = 'Attack: ' + this.player.clickDmg;
+		}
 	}
 
 });

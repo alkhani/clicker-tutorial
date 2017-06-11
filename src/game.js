@@ -41,7 +41,6 @@ game.state.add('play', {
 		buttonImage.ctx.fillRect(0, 0, 225, 48);
 		buttonImage.ctx.strokeRect(0, 0, 225, 48);
 		this.game.cache.addBitmapData('button', buttonImage);
-
 	},
 	create: function() {
 		var state = this;
@@ -128,7 +127,8 @@ game.state.add('play', {
 		//
 		this.player = {
 			clickDmg: 50,
-			gold: 0
+			gold: 0,
+			dps: 0
 		};
 
 		//
@@ -188,15 +188,24 @@ game.state.add('play', {
 		var upgradeButtons = this.upgradePanel.addChild(this.game.add.group()); // create a group for the buttons. set them as the children of the bitmap.
 		upgradeButtons.position.setTo(8,8); // set the position of the group of buttons RELATIVE to their parent, the bitmap (ie. 0,0 is the top left corner of the bitmap)
 
-		var button;
-		button = this.game.add.button(0,0,this.game.cache.getBitmapData('button'));
-		button.icon = button.addChild(this.game.add.image(6,6, 'dagger'));
-		button.text = button.addChild(this.game.add.text(42,6,'Attack: ' + this.player.clickDmg, {font: '16px Arial Black'}));
-		button.details = {cost: 5};
-		button.costText = button.addChild(this.game.add.text(42,24,'Cost: ' + button.details.cost, {font: '16px Arial Black'}));
-		button.events.onInputDown.add(this.onUpgradeButtonClick, this);
+		var upgradeButtonsData = [
+			{icon: 'dagger', name: 'Attack', level: 1, cost: 5, purchaseHandler: function(button, player) {player.clickDmg += 1;}},
+			{icon: 'dagger', name: 'Auto-Attack', level: 0, cost: 25, purchaseHandler: function(button, player) {player.dps += 5;}}
+		]
 
-		upgradeButtons.addChild(button);
+		var button;
+		upgradeButtonsData.forEach(function (data, index) {
+			button = this.game.add.button(0,index * 50,this.game.cache.getBitmapData('button'));
+			button.icon = button.addChild(this.game.add.image(6,6,data.icon));
+			button.text = button.addChild(this.game.add.text(42,6,data.name + ': ' + data.level, {font: '16px Arial Black'}));
+			button.details = data;
+			button.costText = button.addChild(this.game.add.text(42,24,'Cost: ' + data.cost, {font: '16px Arial Black'}));
+			button.events.onInputDown.add(state.onUpgradeButtonClick, state);
+
+			upgradeButtons.addChild(button);
+
+		})
+
 	},
 
 	render: function() {
@@ -270,12 +279,18 @@ game.state.add('play', {
 
 	// click upgrade button
 	onUpgradeButtonClick: function(button, pointer) {
-		// see if i can afford it. wallet > cost
+		// if player can afford the upgrade
 		if (this.player.gold >= button.details.cost) {
-			this.player.gold -= button.details.cost;
-			this.player.clickDmg += 1
+			// take the player's gold
+			this.player.gold -= button.details.cost; 
 			this.playerGoldText.text = 'Gold: ' + this.player.gold;
-			button.text.text = 'Attack: ' + this.player.clickDmg;
+
+			// update the player's stats
+			button.details.purchaseHandler.call(this, button, this.player);
+
+			// update the button
+			button.details.level++;
+			button.text.text = button.details.name + ': ' + button.details.level
 		}
 	}
 
